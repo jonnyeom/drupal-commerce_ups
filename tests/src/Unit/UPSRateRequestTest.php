@@ -3,6 +3,7 @@
 namespace Drupal\Tests\commerce_ups\Unit;
 
 use Drupal\commerce_ups\UPSRateRequest;
+use Drupal\physical\WeightUnit;
 
 /**
  * Class UPSRateRequestTest.
@@ -60,11 +61,16 @@ class UPSRateRequestTest extends UPSUnitTestBase {
   /**
    * Test rate requests return valid rates.
    *
+   * @param string $weight_unit
+   *   Weight unit.
+   *
    * @covers ::getRates
+   *
+   * @dataProvider weightUnitsDataProvider
    */
-  public function testRateRequest() {
+  public function testRateRequest($weight_unit) {
     // Create a mock commerce shipment object.
-    $shipment = $this->mockShipment();
+    $shipment = $this->mockShipment($weight_unit);
 
     // Invoke the rate request object.
     $this->rate_request->setShipment($shipment);
@@ -81,6 +87,21 @@ class UPSRateRequestTest extends UPSUnitTestBase {
       $this->assertEquals($rate->getAmount()->getCurrencyCode(), 'USD');
       $this->assertNotEmpty($rate->getService()->getLabel());
     }
+  }
+
+  /**
+   * Data provider for testRateRequest()
+   *
+   * @return array
+   *   List of measurement units.
+   */
+  public function weightUnitsDataProvider() {
+    return [
+      [WeightUnit::GRAM],
+      [WeightUnit::KILOGRAM],
+      [WeightUnit::OUNCE],
+      [WeightUnit::POUND],
+    ];
   }
 
 }

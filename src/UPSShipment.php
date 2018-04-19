@@ -4,12 +4,14 @@ namespace Drupal\commerce_ups;
 
 use CommerceGuys\Addressing\AddressInterface;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
+use Drupal\physical\WeightUnit;
 use Ups\Entity\Package as UPSPackage;
 use Ups\Entity\Address;
 use Ups\Entity\PackagingType;
 use Ups\Entity\ShipFrom;
 use Ups\Entity\Shipment as APIShipment;
 use Ups\Entity\Dimensions;
+use Ups\Entity\UnitOfMeasurement;
 
 class UPSShipment extends UPSEntity {
   protected $shipment;
@@ -118,9 +120,17 @@ class UPSShipment extends UPSEntity {
    */
   public function setWeight(UPSPackage $ups_package) {
     $ups_package_weight = $ups_package->getPackageWeight();
-    $ups_package_weight->setWeight($this->shipment->getWeight()->getNumber());
-    $unit = $this->getUnitOfMeasure($this->shipment->getWeight()->getUnit());
-    $ups_package_weight->setUnitOfMeasurement($this->setUnitOfMeasurement($unit));
+    $weight = $this->shipment->getWeight();
+    $valid_unit = $this->getValidWeightUnit($ups_package);
+
+    // Convert weight measurement unit if it's not supported by UPS API or does
+    // not match dimensions unit.
+    if ($valid_unit && $weight->getUnit() != $valid_unit) {
+      $weight = $weight->convert($valid_unit);
+    }
+
+    $ups_package_weight->setWeight($weight->getNumber());
+    $ups_package_weight->setUnitOfMeasurement($this->setUnitOfMeasurement($this->getUnitOfMeasure($weight->getUnit())));
   }
 
   /**
@@ -134,6 +144,28 @@ class UPSShipment extends UPSEntity {
     $attributes = new \stdClass();
     $attributes->Code = !empty($remote_id) && $remote_id != 'custom' ? $remote_id : PackagingType::PT_UNKNOWN;
     $ups_package->setPackagingType(new PackagingType($attributes));
+  }
+
+  /**
+   * Get valid weight measurement unit for a given package.
+   *
+   * @param \Ups\Entity\Package $ups_package
+   *   A package object from the Ups API.
+   *
+   * @return string|null
+   *   Valid measurement unit or NULL.
+   */
+  public function getValidWeightUnit(UPSPackage $ups_package) {
+    $ups_dimensions_unit_code = $ups_package->getDimensions()
+      ->getUnitOfMeasurement()
+      ->getCode();
+
+    $map = [
+      UnitOfMeasurement::UOM_CM => WeightUnit::KILOGRAM,
+      UnitOfMeasurement::UOM_IN => WeightUnit::POUND,
+    ];
+
+    return isset($map[$ups_dimensions_unit_code]) ? $map[$ups_dimensions_unit_code] : NULL;
   }
 
 }

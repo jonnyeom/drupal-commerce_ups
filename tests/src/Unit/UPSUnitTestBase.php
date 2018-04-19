@@ -61,7 +61,7 @@ abstract class UPSUnitTestBase extends UnitTestCase {
    * @return \Drupal\commerce_shipping\Entity\ShipmentInterface
    *   A mocked commerce shipment object.
    */
-  public function mockShipment() {
+  public function mockShipment($weight_unit = 'lb') {
     // Mock a Drupal Commerce Order and associated objects.
     $order = $this->prophesize(OrderInterface::class);
     $store = $this->prophesize(StoreInterface::class);
@@ -89,7 +89,7 @@ abstract class UPSUnitTestBase extends UnitTestCase {
     $package_type->getRemoteId()->willReturn(PackagingType::PT_UNKNOWN);
 
     // Mock the shipments weight and package type.
-    $shipment->getWeight()->willReturn(new Weight(10, 'lb'));
+    $shipment->getWeight()->willReturn(new Weight(10, $weight_unit));
     $shipment->getPackageType()->willReturn($package_type->reveal());
 
     // Return the mocked shipment object.
