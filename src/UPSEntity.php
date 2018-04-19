@@ -51,8 +51,9 @@ abstract class UPSEntity {
       case 'cm':
         return UnitOfMeasurement::UOM_CM;
 
+      default:
+        return FALSE;
     }
-    return $unit;
   }
 
 }

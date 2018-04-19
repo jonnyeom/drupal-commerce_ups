@@ -4,6 +4,8 @@ namespace Drupal\commerce_ups;
 
 use CommerceGuys\Addressing\AddressInterface;
 use Drupal\commerce_shipping\Entity\ShipmentInterface;
+use Drupal\physical\Length;
+use Drupal\physical\LengthUnit;
 use Drupal\physical\WeightUnit;
 use Ups\Entity\Package as UPSPackage;
 use Ups\Entity\Address;
@@ -104,10 +106,27 @@ class UPSShipment extends UPSEntity {
    */
   public function setDimensions(UPSPackage $ups_package) {
     $dimensions = new Dimensions();
-    $dimensions->setHeight($this->shipment->getPackageType()->getHeight()->getNumber());
-    $dimensions->setWidth($this->shipment->getPackageType()->getWidth()->getNumber());
-    $dimensions->setLength($this->shipment->getPackageType()->getLength()->getNumber());
-    $unit = $this->getUnitOfMeasure($this->shipment->getPackageType()->getLength()->getUnit());
+    $length = $this->shipment->getPackageType()->getLength();
+    $height = $this->shipment->getPackageType()->getHeight();
+    $width = $this->shipment->getPackageType()->getWidth();
+    // Convert Units if it is not supported by UPS API.
+    if (!$unit = $this->getUnitOfMeasure($length->getUnit())) {
+      // @Todo: Temorarily hard coded. This default length unit should be configurable.
+      $unit = LengthUnit::INCH;
+      $length = $length->convert($unit);
+      $height = $height->convert($unit);
+      $width = $width->convert($unit);
+      $unit = $this->getUnitOfMeasure($unit);
+    }
+
+    // Rounding Units since decimals are not allowed by the UPS API.
+    $length = round($length->getNumber()) ?: 1;
+    $height = round($height->getNumber()) ?: 1;
+    $width = round($width->getNumber()) ?: 1;
+
+    $dimensions->setHeight($length);
+    $dimensions->setWidth($height);
+    $dimensions->setLength($width);
     $dimensions->setUnitOfMeasurement($this->setUnitOfMeasurement($unit));
     $ups_package->setDimensions($dimensions);
   }
