@@ -125,7 +125,7 @@ class UPSShipment extends UPSEntity {
 
     // Convert weight measurement unit if it's not supported by UPS API or does
     // not match dimensions unit.
-    if ($valid_unit && $weight->getUnit() != $valid_unit) {
+    if ($valid_unit && $weight->getUnit() !== $valid_unit) {
       $weight = $weight->convert($valid_unit);
     }
 
@@ -156,16 +156,16 @@ class UPSShipment extends UPSEntity {
    *   Valid measurement unit or NULL.
    */
   public function getValidWeightUnit(UPSPackage $ups_package) {
-    $ups_dimensions_unit_code = $ups_package->getDimensions()
+    $ups_weight_unit_code = $ups_package->getPackageWeight()
       ->getUnitOfMeasurement()
       ->getCode();
 
     $map = [
-      UnitOfMeasurement::UOM_CM => WeightUnit::KILOGRAM,
-      UnitOfMeasurement::UOM_IN => WeightUnit::POUND,
+      UnitOfMeasurement::UOM_KGS => WeightUnit::KILOGRAM,
+      UnitOfMeasurement::UOM_LBS => WeightUnit::POUND,
     ];
 
-    return isset($map[$ups_dimensions_unit_code]) ? $map[$ups_dimensions_unit_code] : NULL;
+    return isset($map[$ups_weight_unit_code]) ? $map[$ups_weight_unit_code] : NULL;
   }
 
 }
