@@ -57,7 +57,10 @@ class UPSRateRequest extends UPSRequest {
     );
 
     try {
-      $ups_shipment = new UPSShipment($this->commerce_shipment);
+      // If requesting negotiated rates, we need the Shipper Number.
+      $shipper_number = ($this->getRateType() && empty($this->configuration['api_information']['account_number'])) ? FALSE : $this->configuration['api_information']['account_number'];
+
+      $ups_shipment = new UPSShipment($this->commerce_shipment, $shipper_number);
       $shipment = $ups_shipment->getShipment();
 
       // Enable negotiated rates, if enabled.

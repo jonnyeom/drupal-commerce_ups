@@ -14,16 +14,20 @@ use Ups\Entity\Dimensions;
 class UPSShipment extends UPSEntity {
   protected $shipment;
   protected $api_shipment;
+  protected $shipper_number;
 
   /**
    * UPSShipment constructor.
    *
    * @param \Drupal\commerce_shipping\Entity\ShipmentInterface $shipment
    *   A commerce shipping shipment object.
+   * @param bool|string $account_number
+   *   The Account/Shipper Number or FALSE.
    */
-  public function __construct(ShipmentInterface $shipment) {
+  public function __construct(ShipmentInterface $shipment, $account_number = FALSE) {
     parent::__construct();
     $this->shipment = $shipment;
+    $this->shipper_number = $account_number;
   }
 
   /**
@@ -37,6 +41,7 @@ class UPSShipment extends UPSEntity {
     $this->setShipTo($api_shipment);
     $this->setShipFrom($api_shipment);
     $this->setPackage($api_shipment);
+    $this->setShipperNumber($api_shipment);
     return $api_shipment;
   }
 
@@ -78,6 +83,24 @@ class UPSShipment extends UPSEntity {
     $ship_from = new ShipFrom();
     $ship_from->setAddress($from_address);
     $api_shipment->setShipFrom($ship_from);
+  }
+
+  /**
+   * Sets the Shipper Number.
+   *
+   * This is only set if Negotiated Rates are requested and the Account
+   * Number is configured.
+   *
+   * @param \Ups\Entity\Shipment $api_shipment
+   *   A Ups API shipment object.
+   */
+  public function setShipperNumber(APIShipment $api_shipment) {
+    if (!$this->shipper_number) {
+      return;
+    }
+    $shipper = $api_shipment->getShipper();
+    $shipper->setShipperNumber($this->shipper_number);
+    $api_shipment->setShipper($shipper);
   }
 
   /**
