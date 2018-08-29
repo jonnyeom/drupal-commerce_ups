@@ -110,6 +110,7 @@ class UPS extends ShippingMethodBase {
         'access_key' => '',
         'user_id' => '',
         'password' => '',
+        'account_number' => '',
         'mode' => 'test',
       ],
       'rate_options' => [
@@ -153,6 +154,20 @@ class UPS extends ShippingMethodBase {
       '#title' => t('Password'),
       '#default_value' => $this->configuration['api_information']['password'],
       '#required' => TRUE,
+    ];
+
+    $form['api_information']['account_number'] = [
+      '#type' => 'textfield',
+      '#title' => t('Account Number'),
+      '#description' => $this->t('This is only needed and used when requesting Negotiated Rates'),
+      '#default_value' => $this->configuration['api_information']['account_number'],
+      '#states' => [
+        'required' => [
+          ':input[name="plugin[0][target_plugin_configuration][ups][rate_options][rate_type]"]' => [
+            'value' => 1,
+          ]
+        ],
+      ],
     ];
 
     $form['api_information']['mode'] = [
@@ -211,6 +226,7 @@ class UPS extends ShippingMethodBase {
       $this->configuration['api_information']['access_key'] = $values['api_information']['access_key'];
       $this->configuration['api_information']['user_id'] = $values['api_information']['user_id'];
       $this->configuration['api_information']['password'] = $values['api_information']['password'];
+      $this->configuration['api_information']['account_number'] = $values['api_information']['account_number'];
       $this->configuration['api_information']['mode'] = $values['api_information']['mode'];
       $this->configuration['rate_options']['rate_type'] = $values['rate_options']['rate_type'];
       $this->configuration['options']['log'] = $values['options']['log'];

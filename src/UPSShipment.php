@@ -28,6 +28,13 @@ class UPSShipment extends UPSEntity implements UPSShipmentInterface {
   protected $api_shipment;
 
   /**
+   * The Shipper/Account Number, used for negotiated rates.
+   *
+   * @var bool|string
+   */
+  protected $shipper_number;
+
+  /**
    * The shipping method.
    *
    * @var \Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface
@@ -41,19 +48,23 @@ class UPSShipment extends UPSEntity implements UPSShipmentInterface {
    *   The shipment.
    * @param \Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface $shipping_method
    *   The shipping method.
+   * @param bool|string $account_number
+   *   The Account/Shipper Number or FALSE.
    *
    * @return \Ups\Entity\Shipment
    *   A Ups API shipment object.
    *
    * @throws \Drupal\Core\TypedData\Exception\MissingDataException
    */
-  public function getShipment(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method) {
+  public function getShipment(ShipmentInterface $shipment, ShippingMethodInterface $shipping_method, $account_number = FALSE) {
     $this->shipment = $shipment;
     $this->shipping_method = $shipping_method;
+    $this->shipper_number = $account_number;
     $api_shipment = new APIShipment();
     $this->setShipTo($api_shipment);
     $this->setShipFrom($api_shipment);
     $this->setPackage($api_shipment);
+    $this->setShipperNumber($api_shipment);
     return $api_shipment;
   }
 
@@ -97,6 +108,24 @@ class UPSShipment extends UPSEntity implements UPSShipmentInterface {
     $ship_from = new ShipFrom();
     $ship_from->setAddress($from_address);
     $api_shipment->setShipFrom($ship_from);
+  }
+
+  /**
+   * Sets the Shipper Number.
+   *
+   * This is only set if Negotiated Rates are requested and the Account
+   * Number is configured.
+   *
+   * @param \Ups\Entity\Shipment $api_shipment
+   *   A Ups API shipment object.
+   */
+  public function setShipperNumber(APIShipment $api_shipment) {
+    if (!$this->shipper_number) {
+      return;
+    }
+    $shipper = $api_shipment->getShipper();
+    $shipper->setShipperNumber($this->shipper_number);
+    $api_shipment->setShipper($shipper);
   }
 
   /**
