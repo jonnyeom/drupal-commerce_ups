@@ -7,7 +7,8 @@ use Drupal\commerce_shipping\Entity\ShipmentInterface;
 use Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface;
 use Drupal\commerce_shipping\ShippingRate;
 use Drupal\commerce_shipping\ShippingService;
-use Psr\Container\ContainerInterface;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Ups\Rate;
 use Ups\Entity\RateInformation;
 
@@ -17,19 +18,6 @@ use Ups\Entity\RateInformation;
  * @package Drupal\commerce_ups
  */
 class UPSRateRequest extends UPSRequest implements UPSRateRequestInterface {
-  /**
-   * The commerce shipment.
-   *
-   * @var \Drupal\commerce_shipping\Entity\ShipmentInterface
-   */
-  protected $commerce_shipment;
-
-  /**
-   * The commerce shipping method.
-   *
-   * @var \Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface
-   */
-  protected $shipping_method;
 
   /**
    * A shipping method configuration array.
@@ -43,25 +31,26 @@ class UPSRateRequest extends UPSRequest implements UPSRateRequestInterface {
    *
    * @var \Drupal\commerce_ups\UPSShipmentInterface
    */
-  protected $ups_shipment;
+  protected $upsShipment;
+
+  /**
+   * The logger.
+   *
+   * @var \Psr\Log\LoggerInterface
+   */
+  protected $logger;
 
   /**
    * UPSRateRequest constructor.
    *
    * @param \Drupal\commerce_ups\UPSShipmentInterface $ups_shipment
    *   The UPS shipment object.
+   * @param \Drupal\Core\Logger\LoggerChannelFactoryInterface $logger_factory
+   *   The logger factory.
    */
-  public function __construct(UPSShipmentInterface $ups_shipment) {
-    $this->ups_shipment = $ups_shipment;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public static function create(ContainerInterface $container) {
-    return new static(
-      $container->get('commerce_ups.ups_shipment')
-    );
+  public function __construct(UPSShipmentInterface $ups_shipment, LoggerChannelFactoryInterface $logger_factory) {
+    $this->upsShipment = $ups_shipment;
+    $this->logger = $logger_factory->get(UPSRateRequestInterface::LOGGER_CHANNEL);
   }
 
   /**
@@ -84,8 +73,12 @@ class UPSRateRequest extends UPSRequest implements UPSRateRequestInterface {
     try {
       $auth = $this->getAuth();
     }
-    catch (\Exception $exception) {
-      \Drupal::logger('commerce_ups')->error(dt('Unable to fetch authentication config for UPS. Please check your shipping method configuration.'));
+    catch (\Exception $e) {
+      $this->logger->error(
+        new TranslatableMarkup(
+          'Unable to fetch authentication config for UPS. Please check your shipping method configuration.'
+        )
+      );
       return [];
     }
 
@@ -97,7 +90,7 @@ class UPSRateRequest extends UPSRequest implements UPSRateRequestInterface {
     );
 
     try {
-      $shipment = $this->ups_shipment->getShipment($commerce_shipment, $shipping_method);
+      $shipment = $this->upsShipment->getShipment($commerce_shipment, $shipping_method);
 
       // Enable negotiated rates, if enabled.
       if ($this->getRateType()) {
@@ -110,8 +103,8 @@ class UPSRateRequest extends UPSRequest implements UPSRateRequestInterface {
       // Shop Rates.
       $ups_rates = $request->shopRates($shipment);
     }
-    catch (\Exception $ex) {
-      \Drupal::logger('commerce_ups')->error($ex->getMessage());
+    catch (\Exception $e) {
+      $this->logger->error($e->getMessage());
       $ups_rates = [];
     }
 
@@ -129,7 +122,6 @@ class UPSRateRequest extends UPSRequest implements UPSRateRequestInterface {
           $cost = $ups_rate->NegotiatedRates->NetSummaryCharges->GrandTotal->MonetaryValue;
           $currency = $ups_rate->NegotiatedRates->NetSummaryCharges->GrandTotal->CurrencyCode;
         }
-
         // Otherwise, use the default rates.
         else {
           $cost = $ups_rate->TotalCharges->MonetaryValue;

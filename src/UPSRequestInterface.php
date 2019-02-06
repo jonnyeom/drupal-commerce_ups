@@ -2,6 +2,11 @@
 
 namespace Drupal\commerce_ups;
 
+/**
+ * Interface for the UPS API Service.
+ *
+ * @package Drupal\commerce_ups
+ */
 interface UPSRequestInterface {
 
   /**
