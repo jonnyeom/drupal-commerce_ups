@@ -3,7 +3,10 @@
 namespace Drupal\Tests\commerce_ups\Unit;
 
 use Drupal\commerce_ups\UPSRateRequest;
+use Drupal\commerce_ups\UPSRateRequestInterface;
 use Drupal\commerce_ups\UPSShipment;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+use Drupal\Core\Logger\LoggerChannelInterface;
 use Drupal\physical\LengthUnit;
 use Drupal\physical\WeightUnit;
 
@@ -14,18 +17,26 @@ use Drupal\physical\WeightUnit;
  * @group commerce_ups
  */
 class UPSRateRequestTest extends UPSUnitTestBase {
+
   /**
+   * A UPS rate request object.
+   *
    * @var \Drupal\commerce_ups\UPSRateRequest
    */
-  protected $rate_request;
+  protected $rateRequest;
 
   /**
    * Set up requirements for test.
    */
   public function setUp() {
     parent::setUp();
-    $this->rate_request = new UPSRateRequest(new UPSShipment());
-    $this->rate_request->setConfig($this->configuration);
+
+    $logger_factory = $this->prophesize(LoggerChannelFactoryInterface::class);
+    $logger = $this->prophesize(LoggerChannelInterface::class);
+    $logger_factory->get(UPSRateRequestInterface::LOGGER_CHANNEL)
+      ->willReturn($logger->reveal());
+    $this->rateRequest = new UPSRateRequest(new UPSShipment(), $logger_factory->reveal());
+    $this->rateRequest->setConfig($this->configuration);
   }
 
   /**
@@ -34,7 +45,8 @@ class UPSRateRequestTest extends UPSUnitTestBase {
    * @covers ::getAuth
    */
   public function testAuth() {
-    $auth = $this->rate_request->getAuth();
+    $auth = $this->rateRequest->getAuth();
+
     $this->assertEquals($auth['access_key'], $this->configuration['api_information']['access_key']);
     $this->assertEquals($auth['user_id'], $this->configuration['api_information']['user_id']);
     $this->assertEquals($auth['password'], $this->configuration['api_information']['password']);
@@ -46,7 +58,8 @@ class UPSRateRequestTest extends UPSUnitTestBase {
    * @covers ::useIntegrationMode
    */
   public function testIntegrationMode() {
-    $mode = $this->rate_request->useIntegrationMode();
+    $mode = $this->rateRequest->useIntegrationMode();
+
     $this->assertEquals(TRUE, $mode);
   }
 
@@ -56,7 +69,8 @@ class UPSRateRequestTest extends UPSUnitTestBase {
    * @covers ::getRateType
    */
   public function testRateType() {
-    $type = $this->rate_request->getRateType();
+    $type = $this->rateRequest->getRateType();
+
     $this->assertEquals(TRUE, $type);
   }
 
@@ -78,7 +92,7 @@ class UPSRateRequestTest extends UPSUnitTestBase {
     // Invoke the rate request object.
     $shipment = $this->mockShipment($weight_unit, $length_unit, $send_from_usa);
     $shipping_method = $this->mockShippingMethod();
-    $rates = $this->rate_request->getRates($shipment, $shipping_method);
+    $rates = $this->rateRequest->getRates($shipment, $shipping_method);
 
     // Make sure at least one rate was returned.
     $this->assertArrayHasKey(0, $rates);

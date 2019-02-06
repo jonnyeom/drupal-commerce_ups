@@ -16,7 +16,7 @@ commerce_shipping.commerce_shipping_method.plugin.ups:
           label: 'Password'
         mode:
           type: boolean
-          label: 'Choose whether to use the test or live mode'
+          label: 'Choose whether to use test or live mode'
     rate_options:
       type: mapping
       label: 'UPS Rating Options'
@@ -36,12 +36,12 @@ commerce_shipping.commerce_shipping_method.plugin.ups:
           label: 'Log the following messages for debugging'
           mapping:
             request:
-              type: field.value.boolean
+              type: boolean
               mapping:
                 value:
                   label: 'API request messages'
             response:
-              type: field.value.boolean
+              type: boolean
               mapping:
                 value:
                   label: 'API response messages'

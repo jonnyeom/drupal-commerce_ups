@@ -17,14 +17,15 @@ class UPSShipmentTest extends UPSUnitTestBase {
    *
    * @var \Drupal\commerce_ups\UPSShipment
    */
-  protected $ups_shipment;
+  protected $upsShipment;
 
   /**
    * Set up requirements for test.
    */
   public function setUp() {
     parent::setUp();
-    $this->ups_shipment = new UPSShipment();
+
+    $this->upsShipment = new UPSShipment();
   }
 
   /**
@@ -33,9 +34,9 @@ class UPSShipmentTest extends UPSUnitTestBase {
    * @covers ::setShipFrom
    */
   public function testShipFrom() {
-    $shipment = $this->mockShipment();
-    $api_shipment = $this->ups_shipment->getShipment($this->mockShipment(), $this->mockShippingMethod());
+    $api_shipment = $this->upsShipment->getShipment($this->mockShipment(), $this->mockShippingMethod());
     $ship_from = $api_shipment->getShipFrom()->getAddress();
+
     $this->assertEquals('1025 Brevard Rd', $ship_from->getAddressLine1());
     $this->assertEquals('Asheville', $ship_from->getCity());
     $this->assertEquals('NC', $ship_from->getStateProvinceCode());
@@ -49,9 +50,9 @@ class UPSShipmentTest extends UPSUnitTestBase {
    * @covers ::setShipTo
    */
   public function testShipTo() {
-    $shipment = $this->mockShipment();
-    $api_shipment = $this->ups_shipment->getShipment($this->mockShipment(), $this->mockShippingMethod());
+    $api_shipment = $this->upsShipment->getShipment($this->mockShipment(), $this->mockShippingMethod());
     $ship_to = $api_shipment->getShipTo()->getAddress();
+
     $this->assertEquals('1025 Brevard Rd', $ship_to->getAddressLine1());
     $this->assertEquals('Asheville', $ship_to->getCity());
     $this->assertEquals('NC', $ship_to->getStateProvinceCode());
@@ -68,12 +69,13 @@ class UPSShipmentTest extends UPSUnitTestBase {
    * @covers ::setPackagingType
    */
   public function testPackage() {
-    $shipment = $this->mockShipment();
-    $api_shipment = $this->ups_shipment->getShipment($this->mockShipment(), $this->mockShippingMethod());
+    $api_shipment = $this->upsShipment->getShipment($this->mockShipment(), $this->mockShippingMethod());
     $packages = $api_shipment->getPackages();
     $this->assertCount(1, $packages);
+
     /** @var \Ups\Entity\Package $package */
     $package = reset($packages);
+
     $this->assertEquals(10, $package->getDimensions()->getLength());
     $this->assertEquals(3, $package->getDimensions()->getWidth());
     $this->assertEquals(10, $package->getDimensions()->getHeight());

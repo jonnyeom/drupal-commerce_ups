@@ -11,6 +11,7 @@
     "source": "http://cgit.drupalcode.org/commerce_ups"
   },
   "require": {
+    "drupal/commerce_shipping": "^2.0@beta",
     "gabrielbull/ups-api": "~0.7"
   }
 }

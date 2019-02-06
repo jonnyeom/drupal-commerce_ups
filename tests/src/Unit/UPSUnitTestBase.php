@@ -21,6 +21,12 @@ use Drupal\commerce_store\Entity\StoreInterface;
  * @package Drupal\Tests\commerce_ups\Unit
  */
 abstract class UPSUnitTestBase extends UnitTestCase {
+
+  /**
+   * A shipping method configuration array.
+   *
+   * @var array
+   */
   protected $configuration;
 
   /**
@@ -113,6 +119,8 @@ abstract class UPSUnitTestBase extends UnitTestCase {
   }
 
   /**
+   * Creates a mock Drupal Commerce shipping method.
+   *
    * @return \Drupal\commerce_shipping\Plugin\Commerce\ShippingMethod\ShippingMethodInterface
    *   The mocked shipping method.
    */
@@ -125,6 +133,7 @@ abstract class UPSUnitTestBase extends UnitTestCase {
     $package_type->getWeight()->willReturn(new Weight(10, 'lb'));
     $package_type->getRemoteId()->willReturn('custom');
     $shipping_method->getDefaultPackageType()->willReturn($package_type);
+
     return $shipping_method->reveal();
   }
 
